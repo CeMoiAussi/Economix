@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 DATA_FILE = Path(__file__).with_name("verteilungsbasierte-vermoegensbilanzen-xls-data.xlsx")
-OUTPUT_FILE = Path(__file__).with_name("wealth_distribution.html")
+OUTPUT_FILE = Path(__file__).with_name("index.html")
 
 GROUPS = [
     ("Quin.1", 0.20),
