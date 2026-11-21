@@ -5,7 +5,7 @@ Interactive Plotly chart of the German wealth distribution, built from `verteilu
 ## Files
 
 - `plot_wealth.py` — builds the chart from the Excel data.
-- `wealth_distribution.html` — generated interactive chart.
+- `index.html` — generated interactive chart.
 - `verteilungsbasierte-vermoegensbilanzen-xls-data.xlsx` — source data.
 - `requirements.txt` — pinned Python dependencies.
 
@@ -34,7 +34,7 @@ From Windows PowerShell:
 wsl -d Ubuntu bash -lc 'cd ~/Economix && .venv/bin/python plot_wealth.py'
 ```
 
-Open `wealth_distribution.html` in a browser.
+Open `index.html` in a browser.
 
 ## Method
 

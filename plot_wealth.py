@@ -54,6 +54,9 @@ EVEN_LINE_GRADIENTS = (1.0,)
 EVEN_LINE_COLORS = ("#2a9d8f",)
 EVEN_LINE_DASHES = ("dot",)
 
+CURRENT_LABEL = "Current Distributuion (approximated)"
+EVEN_LABEL = "Propsed Goal for a more equal distribution (+/- 100% from arithmetic mean)"
+
 WIDTH_SCALE = 5.0
 GROUP_GAP = 0.0
 GRID_STEP = 0.025
@@ -185,7 +188,7 @@ def current_curve(table, quarter, names, shares, widths, centers):
     y_points = (coefficients.value * scale).tolist()
     x_points = grid.tolist()
     group_indexes = np.clip(np.searchsorted(left_edges, x_points, side="right") - 1, 0, count - 1)
-    custom = [(names[index], shares[index]) for index in group_indexes]
+    custom = [(names[index], shares[index], x / total) for index, x in zip(group_indexes, x_points)]
     return x_points, y_points, custom
 
 
@@ -213,7 +216,7 @@ def build_figure(table, quarter):
                 customdata=custom,
                 marker_color=color,
                 hovertemplate=(
-                    "%{customdata[0]}<br>"
+                    "Bundesbank · %{customdata[0]}<br>"
                     + item
                     + ": €%{y:,.0f} per household<br>Population: %{customdata[1]:.0%}<extra></extra>"
                 ),
@@ -232,7 +235,7 @@ def build_figure(table, quarter):
                 customdata=custom,
                 marker_color=color,
                 hovertemplate=(
-                    "%{customdata[0]}<br>"
+                    "Bundesbank · %{customdata[0]}<br>"
                     + item
                     + ": €%{y:,.0f} per household<br>Population: %{customdata[1]:.0%}<extra></extra>"
                 ),
@@ -250,7 +253,7 @@ def build_figure(table, quarter):
             customdata=custom,
             marker=dict(color="rgba(0,0,0,0)", line=dict(color="#111111", width=2)),
             hovertemplate=(
-                "%{customdata[0]}<br>Net Wealth: €%{y:,.0f} per household"
+                "Bundesbank · %{customdata[0]}<br>Net Wealth: €%{y:,.0f} per household"
                 "<br>Population: %{customdata[1]:.0%}<extra></extra>"
             ),
         )
@@ -258,16 +261,16 @@ def build_figure(table, quarter):
 
     mean_wealth = value(table, "Net Wealth", "Total", quarter)
     total_width = sum(widths)
-    line_x = [0.0, total_width]
+    line_x = np.linspace(0.0, total_width, 201)
     for gradient, color, dash in zip(EVEN_LINE_GRADIENTS, EVEN_LINE_COLORS, EVEN_LINE_DASHES):
         figure.add_trace(
             go.Scatter(
-                name=f"Even distribution ±{gradient:.0%}",
+                name=EVEN_LABEL,
                 x=line_x,
                 y=[mean_wealth * (1 - gradient + 2 * gradient * x / total_width) for x in line_x],
                 mode="lines",
                 line=dict(color=color, width=2, dash=dash),
-                hovertemplate=f"Even ±{gradient:.0%}<br>€%{{y:,.0f}}<extra></extra>",
+                hovertemplate="€%{y:,.0f}",
             )
         )
 
@@ -277,15 +280,15 @@ def build_figure(table, quarter):
     )
     figure.add_trace(
         go.Scatter(
-            name="Current distribution",
+            name=CURRENT_LABEL,
             x=current_x,
             y=current_y,
             mode="lines",
             line=dict(color="#b00020", width=3),
             customdata=current_custom,
             hovertemplate=(
-                "%{customdata[0]}<br>Net Wealth: €%{y:,.0f} per household"
-                "<br>Population: %{customdata[1]:.0%}<extra></extra>"
+                "Percentile: %{customdata[2]:.0%}<br>"
+                "€%{y:,.0f} per household"
             ),
         )
     )
@@ -297,7 +300,17 @@ def build_figure(table, quarter):
             y=[mean_wealth],
             mode="markers",
             marker=dict(color="#111111", size=8),
-            hovertemplate="Arithmetic mean<br>€%{y:,.0f}<extra></extra>",
+            hovertemplate="Arithmetic mean: €%{y:,.0f}",
+        )
+    )
+
+    curve_names = [CURRENT_LABEL, EVEN_LABEL, "Arithmetic mean (50%)"]
+    figure.data = tuple(
+        sorted(
+            figure.data,
+            key=lambda trace: curve_names.index(trace.name)
+            if trace.name in curve_names
+            else len(curve_names),
         )
     )
 
@@ -318,6 +331,8 @@ def build_figure(table, quarter):
             tickvals=centers,
             ticktext=[f"{name}<br>{share:.0%}" for name, (_, share) in zip(names, GROUPS)],
             range=[-0.3, cursor + 0.3],
+            hoverformat=" ",
+            unifiedhovertitle=dict(text=" "),
         ),
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="left", x=0),
