@@ -320,10 +320,10 @@ def build_figure(table, quarter):
             text=f"Net wealth per household by population group, {quarter} (Germany)",
             x=0.5,
             xanchor="center",
-            y=1.0,
-            yanchor="bottom",
+            font=dict(size=20),
         ),
-        margin=dict(t=80, b=220, l=70, r=40),
+        height=800,
+        margin=dict(t=100, b=220, l=70, r=40),
         xaxis_title="Population group (bar width = share of population)",
         yaxis=dict(title="EUR per household", tickprefix="€"),
         xaxis=dict(
