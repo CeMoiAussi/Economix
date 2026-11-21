@@ -1,4 +1,4 @@
-from math import exp, isclose, log, log10
+from math import exp, isclose, log
 from pathlib import Path
 
 import cvxpy as cp
@@ -8,7 +8,6 @@ import plotly.graph_objects as go
 
 DATA_FILE = Path(__file__).with_name("verteilungsbasierte-vermoegensbilanzen-xls-data.xlsx")
 OUTPUT_FILE = Path(__file__).with_name("wealth_distribution.html")
-OUTPUT_LOG_FILE = Path(__file__).with_name("net_wealth_log.html")
 
 GROUPS = [
     ("Quin.1", 0.20),
@@ -328,55 +327,11 @@ def build_figure(table, quarter):
     return figure
 
 
-def build_log_figure(table, quarter):
-    names = [name for name, _ in GROUPS]
-    _, _, centers, cursor = group_positions()
-    net_values = [group_value(table, "Net Wealth", name, quarter) for name in names]
-
-    figure = go.Figure(
-        go.Scatter(
-            name="Net Wealth",
-            x=centers,
-            y=[amount if amount > 0 else None for amount in net_values],
-            mode="lines+markers",
-            line=dict(color="#111111", width=2),
-            marker=dict(color="#111111", size=9),
-            customdata=list(zip(names, net_values, [share for _, share in GROUPS])),
-            hovertemplate=(
-                "%{customdata[0]}<br>Net Wealth: €%{customdata[1]:,.0f} per household"
-                "<br>Population: %{customdata[2]:.0%}<extra></extra>"
-            ),
-        )
-    )
-
-    figure.update_layout(
-        title=f"Net wealth per household (log scale), {quarter} (Germany)",
-        xaxis_title="Population group",
-        yaxis_title="EUR per household (log scale)",
-        xaxis=dict(
-            tickmode="array",
-            tickvals=centers,
-            ticktext=[f"{name}<br>{share:.0%}" for name, (_, share) in zip(names, GROUPS)],
-            range=[-0.3, cursor + 0.3],
-        ),
-        yaxis=dict(
-            type="log",
-            tickvals=[100, 1000, 10000, 100000, 1000000, 10000000],
-            ticktext=["€100", "€1,000", "€10,000", "€100,000", "€1,000,000", "€10,000,000"],
-            range=[log10(100), log10(10000000)],
-        ),
-        template="plotly_white",
-    )
-
-    return figure
-
-
 def main():
     table = read_table()
     quarter = list(next(iter(table.values()))["values"])[-1]
     build_figure(table, quarter).write_html(OUTPUT_FILE, include_plotlyjs=True)
-    build_log_figure(table, quarter).write_html(OUTPUT_LOG_FILE, include_plotlyjs=True)
-    print(f"Wrote {OUTPUT_FILE} and {OUTPUT_LOG_FILE} ({quarter})")
+    print(f"Wrote {OUTPUT_FILE} ({quarter})")
 
 
 if __name__ == "__main__":
